@@ -1,32 +1,51 @@
 import { Component } from '@angular/core';
+import * as jszip from 'jszip';
+import * as yaml from 'js-yaml';
+import * as JSZip from 'jszip';
 
 @Component({
   selector: 'app-root',
-  template: `
-    <!--The content below is only a placeholder and can be replaced.-->
-    <div style="text-align:center" class="content">
-      <h1>
-        Welcome to {{title}}!
-      </h1>
-      <span style="display: block">{{ title }} app is running!</span>
-      <img width="300" alt="Angular Logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTAgMjUwIj4KICAgIDxwYXRoIGZpbGw9IiNERDAwMzEiIGQ9Ik0xMjUgMzBMMzEuOSA2My4ybDE0LjIgMTIzLjFMMTI1IDIzMGw3OC45LTQzLjcgMTQuMi0xMjMuMXoiIC8+CiAgICA8cGF0aCBmaWxsPSIjQzMwMDJGIiBkPSJNMTI1IDMwdjIyLjItLjFWMjMwbDc4LjktNDMuNyAxNC4yLTEyMy4xTDEyNSAzMHoiIC8+CiAgICA8cGF0aCAgZmlsbD0iI0ZGRkZGRiIgZD0iTTEyNSA1Mi4xTDY2LjggMTgyLjZoMjEuN2wxMS43LTI5LjJoNDkuNGwxMS43IDI5LjJIMTgzTDEyNSA1Mi4xem0xNyA4My4zaC0zNGwxNy00MC45IDE3IDQwLjl6IiAvPgogIDwvc3ZnPg==">
-    </div>
-    <h2>Here are some links to help you start: </h2>
-    <ul>
-      <li>
-        <h2><a target="_blank" rel="noopener" href="https://angular.io/tutorial">Tour of Heroes</a></h2>
-      </li>
-      <li>
-        <h2><a target="_blank" rel="noopener" href="https://angular.io/cli">CLI Documentation</a></h2>
-      </li>
-      <li>
-        <h2><a target="_blank" rel="noopener" href="https://blog.angular.io/">Angular blog</a></h2>
-      </li>
-    </ul>
-    <router-outlet></router-outlet>
-  `,
+  templateUrl: "./templates/home.html",
   styles: []
 })
 export class AppComponent {
-  title = 'emulator';
+  fileToUpload: File = null;
+  cards = []
+  templates = {}
+  card = ""
+
+  async handleFileInput(files: FileList){
+    this.fileToUpload = files.item(0)
+    console.log(this.fileToUpload.name);
+    let deck = await jszip.loadAsync(this.fileToUpload);
+    console.log(deck.files);
+    let deckinfo = yaml.safeLoad(await deck.file('deck.yaml').async('string'))
+    console.log("Deck Info: ", deckinfo);
+    //for card in deck, load cards
+    for(let i=0; i< deckinfo['deck'].length; i++){
+      //console.log(deckinfo['deck'][i]);
+      let new_card = yaml.safeLoad(await deck.file(`cards/${deckinfo['deck'][i].split('.')[0]}.yaml`).async('string'))
+      this.cards.push(new_card);
+    }
+    console.log("Cards: ", this.cards);
+    
+    for(let n=0; n<deckinfo['templates'].length; n++){
+      let new_template = await deck.file(`templates/${deckinfo['templates'][n]}.js`).async('string')
+      this.templates[deckinfo['templates'][n]] = (new_template);
+    }
+    console.log("Templates: ", this.templates);
+    
+    const makeTemplate = this.templater`${this.templates['legends_default']}`
+    console.log(makeTemplate(this.cards[0]))
+  }
+
+  templater(strings, ...keys) {
+    return function(data) {
+        let temp = strings.slice();
+        keys.forEach((key, i) => {
+            temp[i] = temp[i] + data[key];
+        });
+        return temp.join('');
+    }
+};
 }
