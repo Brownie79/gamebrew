@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import * as jszip from 'jszip';
 import * as yaml from 'js-yaml';
-import * as JSZip from 'jszip';
 
 @Component({
   selector: 'app-root',
@@ -27,25 +26,24 @@ export class AppComponent {
       let new_card = yaml.safeLoad(await deck.file(`cards/${deckinfo['deck'][i].split('.')[0]}.yaml`).async('string'))
       this.cards.push(new_card);
     }
-    console.log("Cards: ", this.cards);
+    //console.log("Cards: ", this.cards);
     
     for(let n=0; n<deckinfo['templates'].length; n++){
-      let new_template = await deck.file(`templates/${deckinfo['templates'][n]}.js`).async('string')
+      let new_template = await deck.file(`templates/${deckinfo['templates'][n]}.html`).async('string')
       this.templates[deckinfo['templates'][n]] = (new_template);
     }
-    console.log("Templates: ", this.templates);
-    
-    const makeTemplate = this.templater`${this.templates['legends_default']}`
-    console.log(makeTemplate(this.cards[0]))
+    //console.log("Templates: ", this.templates);
+    this.card = this.getCard(this.cards[0], this.templates[this.cards[0]['template']])
   }
 
-  templater(strings, ...keys) {
-    return function(data) {
-        let temp = strings.slice();
-        keys.forEach((key, i) => {
-            temp[i] = temp[i] + data[key];
-        });
-        return temp.join('');
-    }
-};
+  getCard(card:object, template:string){
+    console.log("Card: ", card);
+    console.log("Template: ", template);
+    let new_template = template;
+    Object.keys(card['data']).forEach(el => {
+      new_template = new_template.replace(`%%data.${el}%%`,card['data'][el])
+    })
+
+    return new_template
+  }
 }
