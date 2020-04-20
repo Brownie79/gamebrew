@@ -3,6 +3,7 @@ import { Deck, Meta } from '../models/deck';
 import { Card } from '../models/card';
 import * as jszip from 'jszip';
 import * as yaml from 'js-yaml';
+import * as handlebars from 'handlebars';
 
 @Injectable({
   providedIn: 'root'
@@ -13,24 +14,30 @@ export class DeckWorkerService {
 
   async AddDeck(deckfile:File){
     let deckzip = await jszip.loadAsync(deckfile);
-    let _meta: Meta = yaml.safeLoad(await deckzip.file('deck.yaml').async('string'))
+    let _meta: Meta       = yaml.safeLoad(await deckzip.file('deck.yaml').async('string'));
+    console.log("Files: ", deckzip.files)
+    let _backhtml: string = yaml.safeLoad(await deckzip.file('back.html').async("string"));
+    console.log("Back HTML: ", _backhtml)
     //load templates
     let templates = {}
     for(let t=0; t<_meta.templates.length; t++){
-      let new_template  = await deckzip.file(`templates/${_meta['templates'][t]}.html`).async('string')
-      templates[_meta.templates[t]] = new_template
+      let new_template  = await deckzip.file(`templates/${_meta['templates'][t]}.html`).async('string');
+      templates[_meta.templates[t]] = handlebars.compile(new_template);
     }
-    //console.log("Templates: ", templates);
+    console.log("Templates: ", templates);
 
     let cards: Card[] = []
     for(let i=0;i<_meta.deck.length; i++){
       //This line will crash if card in deck.yaml isn't found in cards/
       let cardYaml = yaml.safeLoad(await deckzip.file(`cards/${_meta.deck[i]}.yaml`).async("string"));
       let _ns = cardYaml['namespace']
-      let _html:string = templates[cardYaml['template']]
+      let _html = templates[cardYaml['template']](cardYaml['data']);
+      console.log("Card Template: ", _html)
+      /* let _html:string = templates[cardYaml['template']]
       Object.keys(cardYaml['data']).forEach(el =>{
         _html = _html.replace(`%%data.${el}%%`,cardYaml['data'][el])
       })
+      */
 
       let new_card:Card = {
         namespace: _ns,
@@ -39,10 +46,10 @@ export class DeckWorkerService {
       }
       cards.push(new_card);
     }
-    //console.log("Cards: ", cards);
+    console.log("Cards: ", cards);
 
     let isInf:boolean = false;
-    let new_deck:Deck = new Deck(_meta,cards,isInf);
+    let new_deck:Deck = new Deck(_backhtml,_meta,cards,isInf);
     this.decks.push(new_deck);
   }
 

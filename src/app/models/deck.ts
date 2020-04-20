@@ -9,8 +9,9 @@ export class Deck{
   info: Meta
   cardback: string
 
-  constructor (meta: Meta, cards: Card[], isInf:boolean){
-    console.log("Making new deck...");
+  constructor (backhtml:string, meta: Meta, cards: Card[], isInf:boolean){
+    //console.log("Making new deck...");
+    this.cardback = backhtml
     this.all_cards = cards;
     this.current_cards = cards;
     this.isInfinte = isInf
