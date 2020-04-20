@@ -7,7 +7,7 @@ import { DeckWorkerService } from 'src/app/services/deck-worker.service';
   styleUrls: ['./deck-sidebar.css']
 })
 export class DeckSidebarComponent implements OnInit {
-
+  deckshtml:string =  "";
   constructor(private deckService: DeckWorkerService) { }
 
   ngOnInit(): void {

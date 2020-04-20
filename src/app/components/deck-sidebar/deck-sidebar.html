@@ -1,5 +1,5 @@
 <ul id="decks">
-  <div id="decks"></div>
+  <div id="decks" [innerHTML]="deckshtml"></div>
   <div class="adddeck">
     <label for="file">Add Deck(s)</label>
     <input type="file" id="file" (change)="handleFileInput($event.target.files)">
