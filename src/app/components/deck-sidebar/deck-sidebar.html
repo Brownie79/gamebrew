@@ -1,8 +1,22 @@
 <ul id="decks">
-  <div id="decks" [innerHTML]="deckshtml"></div>
-  <div class="adddeck">
-    <label for="file">Add Deck(s)</label>
-    <input type="file" id="file" (change)="handleFileInput($event.target.files)">
+  <div id="decks">
+    <li *ngFor="let deck of this.deckService.decks">
+      <div [innerHtml]="getSanitized(deck.cardback)"></div>
+    </li>
+  </div>
+  <div class="form-group">
+    <label for="file">Choose File</label>
+    <input type="file"
+           id="file"
+           (change)="handleFileInput($event.target.files)">
   </div>
 </ul>
 <div class="right-divider"></div>
+
+<!--
+
+<div class="form-group" id="adddeck">
+  <label for="file">Add Deck(s)</label>
+  <input type="file" id="file" (change)="handleFileInput($event.target.files)">
+</div>
+-->

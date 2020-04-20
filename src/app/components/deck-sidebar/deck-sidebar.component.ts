@@ -1,21 +1,26 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, Sanitizer } from '@angular/core';
 import { DeckWorkerService } from 'src/app/services/deck-worker.service';
+import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-deck-sidebar',
   templateUrl: 'deck-sidebar.html',
   styleUrls: ['./deck-sidebar.css']
 })
+
 export class DeckSidebarComponent implements OnInit {
-  deckshtml:string =  "";
-  constructor(private deckService: DeckWorkerService) { }
+  constructor(public deckService: DeckWorkerService, private sz:DomSanitizer) { }
 
   ngOnInit(): void {
   }
 
   async handleFileInput(files: FileList){
     for(let i = 0; i<files.length; i++){
-      this.deckService.AddDeck(files.item(i)); //no need to await this, decks will load in the background
+      await this.deckService.AddDeck(files.item(i));
     }
+  }
+
+  getSanitized(html: string){
+    return this.sz.bypassSecurityTrustHtml(html);
   }
 }
